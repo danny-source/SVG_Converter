@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SVG to PNG & ICO Converter</title>
+  <style>
+    :root {
+        --primary-color: #e6a32a;
+        --dark-bg: #2c2c2c;
+        --light-text: #f5f5f5;
+        --dark-text: #333;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        margin: 0;
+        background-color: #f8f9fa;
+        color: var(--dark-text);
+    }
+    header, footer {
+        background-color: var(--dark-bg);
+        color: var(--light-text);
+        padding: 1rem 0;
+        width: 100%;
+        text-align: center;
+    }
+    header nav a {
+        color: var(--light-text);
+        text-decoration: none;
+        padding: 0 15px;
+        font-weight: 500;
+    }
+    header nav a:hover {
+        color: var(--primary-color);
+    }
+    main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 20px 0;
+    }
+    .container {
+        text-align: center;
+        padding: 40px;
+        border-radius: 12px;
+        background-color: #fff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        max-width: 600px;
+        width: 90%;
+        margin-bottom: 20px;
+    }
+    h4 {
+        text-align: center;
+    }
+    #dropZone {
+        border: 2px dashed var(--primary-color);
+        border-radius: 8px;
+        padding: 40px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin-bottom: 20px;
+    }
+    #dropZone.hover {
+        background-color: #fef8e7;
+    }
+    .preview-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 20px;
+        max-width: 600px;
+    }
+    .preview-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+    .preview-item canvas {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #fff;
+    }
+    .btn {
+        display: inline-block;
+        font-weight: 400;
+        color: #fff;
+        text-align: center;
+        vertical-align: middle;
+        cursor: pointer;
+        background-color: var(--primary-color);
+        border: 1px solid var(--primary-color);
+        padding: .5rem 1rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        border-radius: .25rem;
+        text-decoration: none;
+        transition: background-color .15s ease-in-out, border-color .15s ease-in-out;
+    }
+    .btn:hover {
+        background-color: #d49a26;
+        border-color: #c99224;
+    }
+    .btn:disabled {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.65;
+    }
+    #status {
+        margin-top: 15px;
+        font-size: 0.9rem;
+    }
+    .alert { padding: 5px; }
+    .alert-success { color: #155724; }
+    .alert-danger { color: #721c24; }
+    .alert-info { color: #0c5460; }
+    .button-group {
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav>
+      <a href="#">Home</a>
+      <a href="http://da2.35g.tw/?page_id=2" target="_blank">About</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container">
+      <h4>SVG Icon Converter</h4>
+      <p class="text-muted">Drag & drop or select an SVG file to preview, then click Convert.</p>
+      <div id="dropZone">
+          <p>Drop SVG file here</p>
+          <p>or</p>
+          <button class="btn" id="selectFileButton">Select File</button>
+      </div>
+      <input type="file" id="fileInput" accept="image/svg+xml" style="display: none;">
+      
+      <div class="preview-container">
+          <!-- Previews will be generated here -->
+      </div>
+
+      <div class="button-group">
+        <button class="btn" id="convertToIcoButton" style="display: none;">Convert to ICO</button>
+        <button class="btn" id="convertToZipButton" style="display: none;">Convert to PNGs (.zip)</button>
+      </div>
+      <div id="status" class="alert">Ready</div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2024 DA2 Studio. All Rights Reserved.</p>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://unpkg.com/favicon-js@2.0.0/favicon.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const selectFileButton = document.getElementById('selectFileButton');
+        const previewContainer = document.querySelector('.preview-container');
+        const statusDiv = document.getElementById('status');
+        const convertToIcoButton = document.getElementById('convertToIcoButton');
+        const convertToZipButton = document.getElementById('convertToZipButton');
+
+        let sourceImage = new Image();
+        let baseNameForConversion = '';
+
+        function updateStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `alert alert-${type}`;
+        }
+
+        function handleFile(file) {
+            if (!file || !file.type.includes('svg')) {
+                updateStatus('Please upload a valid SVG file.', 'danger');
+                return;
+            }
+
+            baseNameForConversion = file.name.replace(/\.svg$/, '');
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                sourceImage.onload = () => {
+                    previewContainer.innerHTML = ''; // Clear previous previews
+                    const sizes = [128, 64, 32, 16];
+                    
+                    sizes.forEach(size => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = size;
+                        canvas.height = size;
+                        canvas.dataset.size = size;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(sourceImage, 0, 0, size, size);
+                        
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'preview-item';
+                        const label = document.createElement('p');
+                        label.textContent = `${size}x${size}`;
+                        wrapper.appendChild(canvas);
+                        wrapper.appendChild(label);
+                        previewContainer.appendChild(wrapper);
+                    });
+
+                    updateStatus('Preview generated. Ready to convert.', 'success');
+                    convertToIcoButton.style.display = 'inline-block';
+                    convertToZipButton.style.display = 'inline-block';
+                };
+                sourceImage.src = event.target.result;
+            };
+            reader.onerror = () => {
+                updateStatus('Error reading file.', 'danger');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function generateIco() {
+            const canvases = Array.from(previewContainer.querySelectorAll('canvas'));
+            if (canvases.length === 0) {
+                updateStatus('No images to convert. Please select an SVG first.', 'danger');
+                return;
+            }
+
+            updateStatus('Generating .ico file...', 'info');
+            setButtonsState(false);
+            
+            const favicon = new Favicon();
+            favicon.generate(canvases, (ico) => {
+                const link = document.createElement('a');
+                link.href = ico.url;
+                link.download = `${baseNameForConversion}.ico`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                updateStatus('ICO file generated and downloaded!', 'success');
+                setButtonsState(true);
+            });
+        }
+
+        function generateZip() {
+            const canvases = Array.from(previewContainer.querySelectorAll('canvas'));
+             if (canvases.length === 0) {
+                updateStatus('No images to convert. Please select an SVG first.', 'danger');
+                return;
+            }
+
+            updateStatus('Generating .zip file...', 'info');
+            setButtonsState(false);
+
+            const zip = new JSZip();
+            const promises = canvases.map(canvas => {
+                return new Promise(resolve => {
+                    canvas.toBlob(blob => {
+                        const size = canvas.dataset.size;
+                        zip.file(`icon-${size}x${size}.png`, blob);
+                        resolve();
+                    });
+                });
+            });
+
+            Promise.all(promises).then(() => {
+                zip.generateAsync({type:"blob"}).then(function(content) {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    link.download = `${baseNameForConversion}-png-icons.zip`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+                    updateStatus('ZIP file generated and downloaded!', 'success');
+                    setButtonsState(true);
+                });
+            });
+        }
+
+        function setButtonsState(enabled) {
+            convertToIcoButton.disabled = !enabled;
+            convertToZipButton.disabled = !enabled;
+        }
+
+        // --- Event Listeners ---
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('hover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('hover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('hover');
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+        
+        selectFileButton.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        convertToIcoButton.addEventListener('click', generateIco);
+        convertToZipButton.addEventListener('click', generateZip);
+    });
+  </script>
+</body>
+</html>
