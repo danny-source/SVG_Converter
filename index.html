@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SVG to PNG & ICO Converter</title>
+  <title>SVG to PNG Converter</title>
   <style>
     :root {
         --primary-color: #e6a32a;
@@ -122,7 +122,7 @@
     .alert-danger { color: #721c24; }
     .alert-info { color: #0c5460; }
     .button-group {
-        margin-top: 10px;
+        margin-top: 20px;
         display: flex;
         gap: 10px;
         justify-content: center;
@@ -140,8 +140,8 @@
 
   <main>
     <div class="container">
-      <h4>SVG Icon Converter</h4>
-      <p class="text-muted">Drag & drop or select an SVG file to preview, then click Convert.</p>
+      <h4>SVG to PNG Converter</h4>
+      <p class="text-muted">Drag & drop or select an SVG file to generate multi-size PNG previews.</p>
       <div id="dropZone">
           <p>Drop SVG file here</p>
           <p>or</p>
@@ -154,8 +154,7 @@
       </div>
 
       <div class="button-group">
-        <button class="btn" id="convertToIcoButton" style="display: none;">Convert to ICO</button>
-        <button class="btn" id="convertToZipButton" style="display: none;">Convert to PNGs (.zip)</button>
+        <button class="btn" id="convertToZipButton" style="display: none;">Download PNGs (.zip)</button>
       </div>
       <div id="status" class="alert">Ready</div>
     </div>
@@ -166,7 +165,6 @@
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://unpkg.com/favicon-js@2.0.0/favicon.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
         const dropZone = document.getElementById('dropZone');
@@ -174,7 +172,6 @@
         const selectFileButton = document.getElementById('selectFileButton');
         const previewContainer = document.querySelector('.preview-container');
         const statusDiv = document.getElementById('status');
-        const convertToIcoButton = document.getElementById('convertToIcoButton');
         const convertToZipButton = document.getElementById('convertToZipButton');
 
         let sourceImage = new Image();
@@ -216,8 +213,7 @@
                         previewContainer.appendChild(wrapper);
                     });
 
-                    updateStatus('Preview generated. Ready to convert.', 'success');
-                    convertToIcoButton.style.display = 'inline-block';
+                    updateStatus('Preview generated. Ready to download.', 'success');
                     convertToZipButton.style.display = 'inline-block';
                 };
                 sourceImage.src = event.target.result;
@@ -226,29 +222,6 @@
                 updateStatus('Error reading file.', 'danger');
             };
             reader.readAsDataURL(file);
-        }
-
-        function generateIco() {
-            const canvases = Array.from(previewContainer.querySelectorAll('canvas'));
-            if (canvases.length === 0) {
-                updateStatus('No images to convert. Please select an SVG first.', 'danger');
-                return;
-            }
-
-            updateStatus('Generating .ico file...', 'info');
-            setButtonsState(false);
-            
-            const favicon = new Favicon();
-            favicon.generate(canvases, (ico) => {
-                const link = document.createElement('a');
-                link.href = ico.url;
-                link.download = `${baseNameForConversion}.ico`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                updateStatus('ICO file generated and downloaded!', 'success');
-                setButtonsState(true);
-            });
         }
 
         function generateZip() {
@@ -288,7 +261,6 @@
         }
 
         function setButtonsState(enabled) {
-            convertToIcoButton.disabled = !enabled;
             convertToZipButton.disabled = !enabled;
         }
 
@@ -317,7 +289,6 @@
             }
         });
 
-        convertToIcoButton.addEventListener('click', generateIco);
         convertToZipButton.addEventListener('click', generateZip);
     });
   </script>
