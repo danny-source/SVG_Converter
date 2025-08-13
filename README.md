@@ -2,7 +2,7 @@
 
 This is a simple, offline, single-page web tool designed to convert SVG image files into PNG files of various sizes and package them into a ZIP file for download.
 
-![](screenshot.png)
+![](https://raw.githubusercontent.com/danny-source/SVG_Converter/refs/heads/master/screenshot.PNG)
 
 ## Features
 
