@@ -1,5 +1,27 @@
 # SVG to PNG Converter
 
+This is a simple, offline, single-page web tool designed to convert SVG image files into PNG files of various sizes and package them into a ZIP file for download.
+
+![](screenshot.png)
+
+## Features
+
+- **Drag-and-Drop Upload**: Supports dragging and dropping or clicking to select SVG files.
+- **Instant Preview**: Displays an immediate preview of the uploaded SVG image.
+- **Multi-Size Conversion**: Automatically converts SVG into PNG files of five sizes: 16x16, 32x32, 64x64, 128x128, and 256x256.
+- **Automatic Packaging**: All converted PNG images are automatically packaged into a ZIP file.
+- **One-Click Download**: Automatically triggers download upon completion and provides a button for users to download again.
+- **Fully Offline**: All processing is done locally in your browser without needing to upload to any server, ensuring your data privacy.
+
+## How to Use
+
+1. Open the `index.html` file directly in your web browser.
+2. Drag and drop your SVG file into the designated area or click the "Select File" button to choose a file.
+3. The tool will automatically complete the conversion and packaging process, triggering your browser to download the ZIP file.
+
+
+# SVG to PNG Converter
+
 這是一個簡單、離線可用的單頁網頁工具，用於將 SVG 圖片檔案轉換為多種尺寸的 PNG 檔案，並將它們打包成一個 ZIP 檔進行下載。
 
 ## 功能
